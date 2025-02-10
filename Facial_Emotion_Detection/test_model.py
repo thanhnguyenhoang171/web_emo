@@ -15,6 +15,17 @@ model.load_weights(
     "FERPlus_Trained\\Adam_Flatten\\best_model_ferplus_Adam_Flatten.keras"
 )
 
+# Dictionary mapping class indices to emotion labels
+label_dict = {
+    0: "fear",
+    1: "surprise",
+    2: "angry",
+    3: "neutral",
+    4: "sad",
+    5: "disgust",
+    6: "contempt",
+    7: "happy",
+}
 
 def predict_emotion(image_path):
     """
@@ -26,7 +37,6 @@ def predict_emotion(image_path):
     except Exception as e:
         print(f"Error loading image: {e}")
         return
-
 
     # Phát hiện khuôn mặt với CNN
     face_locations = face_recognition.face_locations(
@@ -80,7 +90,7 @@ def predict_emotion(image_path):
             cv2.rectangle(image_bgr, (left, top), (right, bottom), (0, 255, 0), 2)
 
             # Gắn nhãn cho khuôn mặt
-            label = f"Class {predicted_class} ({confidence:.2f})"
+            label = f"{label_dict[predicted_class]} ({confidence:.2f})"
             cv2.putText(
                 image_bgr,
                 label,
@@ -94,7 +104,7 @@ def predict_emotion(image_path):
             # Hiển thị toàn bộ độ tự tin cho các class
             print("Confidence scores for each class:")
             for class_idx, score in enumerate(predictions):
-                print(f"Class {class_idx}: {score:.2f}")
+                print(f"{label_dict[class_idx]}: {score:.2f}")
         else:
             # Nếu độ tự tin thấp hơn ngưỡng, không hiển thị kết quả
             print(f"Confidence below threshold: {confidence:.2f}")
@@ -109,24 +119,36 @@ def predict_emotion(image_path):
 image_path = "chup-anh-gia-dinh-3-nguoi-1.jpg"  # Đường dẫn tới ảnh đầu vào
 predict_emotion(image_path)
 
+# for FER+
+    # label_dict = {
+    #     0: "fear",
+    #     1: "surprise",
+    #     2: "angry",
+    #     3: "neutral",
+    #     4: "sad",
+    #     5: "disgust",
+    #     6: "contempt",
+    #     7: "happy",
+    # }
 
-# label_dict = {
-#     0: "fear",
-#     1: "surprise",
-#     2: "angry",
-#     3: "neutral",
-#     4: "sad",
-#     5: "disgust",
-#     6: "contempt",
-#     7: "happy",
-# }
+#For FER2013
+    # label_dict = {
+    #     0: "angry",
+    #     1: "disgust",
+    #     2: "fear",
+    #     3: "happy",
+    #     4: "sad",
+    #     5: "surprise",
+    #     6: "neutral",
+    # }
 
-# label_dict = {
-#     0: "angry",
-#     1: "disgust",
-#     2: "fear",
-#     3: "happy",
-#     4: "sad",
-#     5: "surprise",
-#     6: "neutral",
-# }
+#For Emodata
+    # label_dict = {
+    #     0: "angry",
+    #     1: "disgust",
+    #     2: "fear",
+    #     3: "happy",
+    #     4: "sad",
+    #     5: "surprise",
+    #     6: "neutral",
+    # }
