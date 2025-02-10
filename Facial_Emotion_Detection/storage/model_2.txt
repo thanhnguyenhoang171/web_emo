@@ -1,0 +1,104 @@
+import numpy as np
+from keras.models import Sequential
+from keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout, BatchNormalization, Activation
+from keras.optimizers import Adam
+from keras.callbacks import ReduceLROnPlateau
+from sklearn.utils.class_weight import compute_class_weight
+from sklearn.metrics import classification_report, confusion_matrix
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Số lượng lớp cảm xúc trong FER2013
+no_of_classes = 7  # FER2013 gồm 7 cảm xúc
+
+# Khởi tạo mô hình CNN
+model = Sequential()
+
+# 1st CNN layer
+model.add(Conv2D(64, (3, 3), padding='same', input_shape=(48, 48, 1)))
+model.add(BatchNormalization())
+model.add(Activation('relu'))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(Dropout(0.25))
+
+# 2nd CNN layer
+model.add(Conv2D(128, (5, 5), padding='same'))
+model.add(BatchNormalization())
+model.add(Activation('relu'))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(Dropout(0.25))
+
+# 3rd CNN layer
+model.add(Conv2D(256, (3, 3), padding='same'))  # Giảm số bộ lọc từ 512 xuống 256
+model.add(BatchNormalization())
+model.add(Activation('relu'))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(Dropout(0.25))
+
+# 4th CNN layer
+model.add(Conv2D(256, (3, 3), padding='same'))
+model.add(BatchNormalization())
+model.add(Activation('relu'))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(Dropout(0.25))
+
+# Flatten layer
+model.add(Flatten())
+
+# Fully connected 1st layer
+model.add(Dense(256))
+model.add(BatchNormalization())
+model.add(Activation('relu'))
+model.add(Dropout(0.25))
+
+# Fully connected 2nd layer
+model.add(Dense(512))
+model.add(BatchNormalization())
+model.add(Activation('relu'))
+model.add(Dropout(0.25))
+
+# Output layer
+model.add(Dense(no_of_classes, activation='softmax'))
+
+# Compile model
+opt = Adam(lr=0.0001)
+model.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['accuracy'])
+
+# Tóm tắt mô hình
+model.summary()
+
+# Callbacks
+reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5, min_lr=1e-7)
+
+# Tính toán class weights để cân bằng dữ liệu
+class_weights = compute_class_weight(
+    class_weight='balanced',
+    classes=np.unique(y_train.flatten()),  # Thay y_train bằng mảng nhãn của bạn
+    y=y_train.flatten()
+)
+
+# Huấn luyện mô hình
+history = model.fit(
+    x_train, y_train,  # Thay x_train, y_train bằng dữ liệu của bạn
+    validation_data=(x_val, y_val),  # Thay x_val, y_val bằng dữ liệu validation
+    epochs=50,
+    batch_size=64,
+    class_weight=class_weights,
+    callbacks=[reduce_lr]
+)
+
+# Đánh giá mô hình
+y_pred = model.predict(x_val)
+y_pred_classes = np.argmax(y_pred, axis=1)
+y_true = np.argmax(y_val, axis=1)
+
+# Báo cáo phân loại
+print(classification_report(y_true, y_pred_classes))
+
+# Ma trận nhầm lẫn
+cm = confusion_matrix(y_true, y_pred_classes)
+emotion_labels = ['Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral']  # Tùy chỉnh nhãn theo dataset
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=emotion_labels, yticklabels=emotion_labels)
+plt.xlabel('Predicted')
+plt.ylabel('True')
+plt.show()
